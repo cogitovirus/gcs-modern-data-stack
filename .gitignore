@@ -11,3 +11,13 @@
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# dbt
+target/
+dbt_modules/
+dbt_packages/
+logs/
+venv/
+env/
+test.env
+__pycache__
