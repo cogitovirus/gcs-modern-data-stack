@@ -21,3 +21,12 @@ venv/
 env/
 test.env
 __pycache__
+
+# local env
+.env
+
+# packaging
+*.egg-info/
+
+# dagster dev env
+tmp*/
