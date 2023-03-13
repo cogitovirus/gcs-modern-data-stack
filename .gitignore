@@ -21,6 +21,7 @@ venv/
 env/
 test.env
 __pycache__
+profiles.yml
 
 # local env
 .env

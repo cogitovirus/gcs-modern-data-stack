@@ -29,5 +29,6 @@ BQ_TARGET_CONFIG= {
 
 
 DBT_PROJECT_DIR = file_relative_path(__file__, "../../dbt_project")
-DBT_PROFILES_DIR = os.getenv("DBT_PROFILES_DIR")
+# Seems kind of stupid to have it here instead of the ~/.dbt/profiles.yml
+DBT_PROFILES_DIR = file_relative_path(__file__, "../../dbt_project/config")
 DBT_CONFIG = {"project_dir": DBT_PROJECT_DIR, "profiles_dir": DBT_PROFILES_DIR}
