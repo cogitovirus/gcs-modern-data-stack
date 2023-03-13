@@ -7,6 +7,7 @@ setup(
     install_requires=[
         "dagster",
         "boto3",
+        "python-dotenv",
         "dagster-airbyte",
         "dagster-dbt",
         "pandas",
