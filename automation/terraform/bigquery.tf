@@ -3,4 +3,5 @@ resource "google_bigquery_dataset" "dataset" {
   friendly_name               = "mds test dataset"
   description                 = "This is a test dataset"
   location                    = "US"
+  delete_contents_on_destroy  = true
 }
