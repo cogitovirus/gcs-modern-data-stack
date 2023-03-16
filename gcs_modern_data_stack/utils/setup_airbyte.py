@@ -96,7 +96,7 @@ def _create_ab_sources(client: AirbyteResource, workspace_id: str) -> str:
             "sourceDefinitionId": source_definition_id,
             "workspaceId": workspace_id,
             "connectionConfiguration": {
-                "path_pattern": "**/*.csv",
+                "path_pattern": "**/stripe_payments*.csv",
                 "provider": {
                     "aws_secret_access_key": S3_SOURCE_CONFIG["aws_secret_access_key"],
                     "aws_access_key_id": S3_SOURCE_CONFIG["aws_access_key_id"],
