@@ -14,7 +14,7 @@ from .utils.constants import AIRBYTE_CONFIG, DBT_CONFIG
 defs = Definitions(
     assets=load_assets_from_package_module(assets),
     resources={
-        # "airbyte": airbyte_resource.configured(AIRBYTE_CONFIG),
+        "airbyte": airbyte_resource.configured(AIRBYTE_CONFIG),
         "dbt": dbt_cli_resource.configured(DBT_CONFIG),
         #TODO: bigquery resource
     },

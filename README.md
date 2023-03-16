@@ -29,7 +29,7 @@ gcloud compute ssh --zone=us-central1-a --ssh-key-file=$SSH_KEY --project=$PROJE
 ### Setup a sample s3<>bigquery connector
 
 ```sh
-python -m gcs_modern_data_stack.utils.setup_airbyte
+python3 -m gcs_modern_data_stack.utils.setup_airbyte
 ```
 
 ## dbt BigQuery
