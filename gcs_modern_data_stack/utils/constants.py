@@ -6,9 +6,14 @@ load_dotenv()
 
 
 # =========================================================================
-# To get this value, run `python -m assets_modern_data_stack.setup_airbyte`
-# and grab the connection id that it prints at the end
-AIRBYTE_CONNECTION_ID = os.getenv("AIRBYTE_CONNECTION_ID")
+# To populate these value, run `python -m assets_modern_data_stack.setup_airbyte`
+# it will automatically populate the .env file with the connection ids
+
+AIRBYTE_CONNECTION_IDS = {
+    "JAFFLE_SHOP_CUSTOMERS_CONNECTION_ID": os.getenv("JAFFLE_SHOP_CUSTOMERS_CONNECTION_ID"),
+    "JAFFLE_SHOP_ORDERS_CONNECTION_ID": os.getenv("JAFFLE_SHOP_ORDERS_CONNECTION_ID"),
+    "STRIPE_PAYMENTS_CONNECTION_ID": os.getenv("STRIPE_PAYMENTS_CONNECTION_ID")
+}
 # =========================================================================
 AIRBYTE_CONFIG = {
     "host": os.getenv("AIRBYTE_HOST"),

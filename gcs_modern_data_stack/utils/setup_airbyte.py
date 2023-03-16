@@ -4,10 +4,15 @@ create an Airbyte Connection between the source database and destination databas
 """
 
 from typing import Any, Dict, Mapping
+from dotenv import set_key
+from pathlib import Path
 
 import dagster._check as check
 from dagster_airbyte import AirbyteResource
+
 from .constants import AIRBYTE_CONFIG, S3_SOURCE_CONFIG, BQ_TARGET_CONFIG
+
+env_file_path = Path("../.env")
 
 
 def _safe_request(
@@ -18,8 +23,7 @@ def _safe_request(
     return response
 
 
-def _create_ab_source(client: AirbyteResource, workspace_id: str) -> str:
-    # get latest available BigQuery source definition
+def _create_ab_sources(client: AirbyteResource, workspace_id: str) -> str:
     source_defs = _safe_request(
         client, "/source_definitions/list_latest", data={"workspaceId": workspace_id}
     )
@@ -31,16 +35,14 @@ def _create_ab_source(client: AirbyteResource, workspace_id: str) -> str:
         raise check.CheckError("Expected at least one S3 source definition.")
     source_definition_id = s3_definitions[0]["sourceDefinitionId"]
 
-    # create S3 source
-    source_id = _safe_request(
-        client,
-        "/sources/create",
-        data={
-            "name": "s3_test_bucket",
+    # define three distinct sources (jaffle_shop_customers, jaffle_shop_orders, stripe_payments)
+    sources_data = [
+        {
+            "name": "JAFFLE_SHOP_CUSTOMERS",
             "sourceDefinitionId": source_definition_id,
             "workspaceId": workspace_id,
             "connectionConfiguration": {
-                "path_pattern": "**/*.csv",
+                "path_pattern": "**/jaffle_shop_customers*.csv",
                 "provider": {
                     "aws_secret_access_key": S3_SOURCE_CONFIG["aws_secret_access_key"],
                     "aws_access_key_id": S3_SOURCE_CONFIG["aws_access_key_id"],
@@ -61,10 +63,73 @@ def _create_ab_source(client: AirbyteResource, workspace_id: str) -> str:
                     "encoding": "utf8"
                 }
             }
+        },
+        {
+            "name": "JAFFLE_SHOP_ORDERS",
+            "sourceDefinitionId": source_definition_id,
+            "workspaceId": workspace_id,
+            "connectionConfiguration": {
+                "path_pattern": "**/jaffle_shop_orders*.csv",
+                "provider": {
+                    "aws_secret_access_key": S3_SOURCE_CONFIG["aws_secret_access_key"],
+                    "aws_access_key_id": S3_SOURCE_CONFIG["aws_access_key_id"],
+                    "path_prefix": "",
+                    "endpoint": "",
+                    "bucket": "wzolni-test-bucket"
+                },
+                "dataset": "jaffle_shop_orders",
+                "schema": "{}",
+                "format": {
+                    "filetype": "csv",
+                    "newlines_in_values": False,
+                    "infer_datatypes": True,
+                    "double_quote": True,
+                    "quote_char": "\"",
+                    "block_size": 10000,
+                    "delimiter": ",",
+                    "encoding": "utf8"
+                }
+            }
+        },
+        {
+            "name": "STRIPE_PAYMENTS",
+            "sourceDefinitionId": source_definition_id,
+            "workspaceId": workspace_id,
+            "connectionConfiguration": {
+                "path_pattern": "**/*.csv",
+                "provider": {
+                    "aws_secret_access_key": S3_SOURCE_CONFIG["aws_secret_access_key"],
+                    "aws_access_key_id": S3_SOURCE_CONFIG["aws_access_key_id"],
+                    "path_prefix": "",
+                    "endpoint": "",
+                    "bucket": "wzolni-test-bucket"
+                },
+                "dataset": "stripe_payments",
+                "schema": "{}",
+                "format": {
+                    "filetype": "csv",
+                    "newlines_in_values": False,
+                    "infer_datatypes": True,
+                    "double_quote": True,
+                    "quote_char": "\"",
+                    "block_size": 10000,
+                    "delimiter": ",",
+                    "encoding": "utf8"
+                }
+            }
         }
-    )["sourceId"]
-    print(f"Created Airbyte Source: {source_id}")
-    return source_id
+
+    ]
+
+    sources_id_name_array = []
+
+    for source_data in sources_data:
+        source_id = _safe_request(client, "/sources/create", data=source_data)["sourceId"]
+        sources_id_name_array.append([source_id, source_data["name"]])
+
+        print(f"Created Airbyte Source: {source_id}")
+
+    return sources_id_name_array
 
 
 def _create_ab_destination(client: AirbyteResource, workspace_id: str) -> str:
@@ -117,47 +182,54 @@ def setup_airbyte():
         "workspaceId"
     ]
 
-    source_id = _create_ab_source(client, workspace_id)
+    sources_id_name_array = _create_ab_sources(client, workspace_id)
     destination_id = _create_ab_destination(client, workspace_id)
 
-    source_catalog = _safe_request(
-        client, "/sources/discover_schema", data={"sourceId": source_id}
-    )["catalog"]
+    # for each source, discover the catalog and create a connection
+    for source_id_name in sources_id_name_array:
+        source_id = source_id_name[0]
+        source_name = source_id_name[1]
+        # discover the catalog for the new source
+        source_catalog = _safe_request(
+            client, "/sources/discover_schema", data={"sourceId": source_id}
+        )["catalog"]
 
-    # create a connection between the new source and destination
-    connection_id = _safe_request(
-        client,
-        "/connections/create",
-        data={
-            "name": "S3 <> BigQuery Connection",
-            "sourceId": source_id,
-            "destinationId": destination_id,
-            "syncCatalog": source_catalog,
-            "status": "active",
-        },
-    )["connectionId"]
+        # create a connection between the new source and destination
+        connection_id = _safe_request(
+            client,
+            "/connections/create",
+            data={
+                "name": source_name,
+                "sourceId": source_id,
+                "destinationId": destination_id,
+                "syncCatalog": source_catalog,
+                "status": "active",
+            },
+        )["connectionId"]
 
-    # patch the connection to set the normalization operation
-    _safe_request(client,
-                  "/web_backend/connections/update",
-                  data={
-                      "connectionId": connection_id,
-                      "operations": [
-                          {
-                              "name": "Normalization",
-                              "workspaceId": workspace_id,
-                              "operatorConfiguration": {
-                                  "operatorType": "normalization",
-                                  "normalization": {
-                                      "option": "basic"
-                                  }
-                              }
-                          }
-                      ]
-                  }
-                  )
+        # patch the connection to set the normalization operation
+        _safe_request(client,
+                    "/web_backend/connections/update",
+                    data={
+                        "connectionId": connection_id,
+                        "operations": [
+                            {
+                                "name": "Normalization",
+                                "workspaceId": workspace_id,
+                                "operatorConfiguration": {
+                                    "operatorType": "normalization",
+                                    "normalization": {
+                                        "option": "basic"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                    )
 
-    print(f"Created Airbyte Connection: {connection_id}")
-
+        print(f"Created Airbyte Connection: {connection_id}")
+        # set the source id in the .env file
+        print(f"Setting {source_name}_CONNECTION_ID in .env file")
+        set_key(dotenv_path=f"{Path.cwd()}/.env", key_to_set=f"{source_name}_CONNECTION_ID", value_to_set=connection_id)
 
 setup_airbyte()
