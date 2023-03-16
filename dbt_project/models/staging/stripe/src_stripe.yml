@@ -2,6 +2,6 @@ version: 2
 
 sources:
   - name: stripe
-    schema: staging
+    schema: mds_test_dataset
     tables:
       - name: stripe_payments

@@ -48,7 +48,7 @@ def _create_ab_source(client: AirbyteResource, workspace_id: str) -> str:
                     "endpoint": "",
                     "bucket": "wzolni-test-bucket"
                 },
-                "dataset": "s3_jaffle_shop_customers",
+                "dataset": "jaffle_shop_customers",
                 "schema": "{}",
                 "format": {
                     "filetype": "csv",
