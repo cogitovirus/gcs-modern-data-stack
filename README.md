@@ -1,5 +1,5 @@
 # gcs-modern-data-stack
-Demo of a modern data stack. Airbyte + Dagster + dbt + BigQuery.
+Demo of a "modern" open source data stack. Airbyte + Dagster + dbt + BigQuery.
 Overview of this project is posted [on my website](https://cogitovirus/posts/20230320-open-source-data-stack-poc/).
 
 ![Alt text](Global_Asset_Lineage.svg)
