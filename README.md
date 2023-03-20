@@ -61,6 +61,8 @@ This will seed airbyte with 3 source connectors, bigQuery destination and the co
 
 **Hint:** Make sure that the ids that were set up, did indeed made it to .env file. I stumbled upon an issue where i had .env file opened in my IDE which was preventing automation from writing to the file properly.
 
+**Hint2:** there's also a `gcs_modern_data_stack.utils.teardown_airbyte` if you need to redo the auto setup.
+
 ### Dagster
 Run the dagster server
 ```sh
