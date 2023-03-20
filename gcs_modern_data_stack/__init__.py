@@ -5,13 +5,10 @@ from dagster import (
     load_assets_from_package_module,
 )
 from dagster_airbyte import airbyte_resource
-# from dagster_gcp import bigquery_resource
 from dagster_dbt import dbt_cli_resource
 from dagster_dbt import load_assets_from_dbt_project
 
-# from gcs_modern_data_stack import assets
 from gcs_modern_data_stack.assets import airbyte
-# import gcs_modern_data_stack.assets as airbyte
 
 from .utils.constants import AIRBYTE_CONFIG, DBT_CONFIG, DBT_PROJECT_DIR, DBT_PROFILES_DIR
 
@@ -25,8 +22,7 @@ defs = Definitions(
     assets=[*airbyty_assets, *dbt_assets],
     resources={
         "airbyte": airbyte_resource.configured(AIRBYTE_CONFIG),
-        "dbt": dbt_cli_resource.configured(DBT_CONFIG),
-        #TODO: bigquery resource
+        "dbt": dbt_cli_resource.configured(DBT_CONFIG)
     },
     schedules=[
         # update all assets once a day
