@@ -1,22 +1,44 @@
 # gcs-modern-data-stack
 Demo of a modern data stack. Airbyte + Dagster + dbt + BigQuery.
+Overview of this project is posted [on my website](https://cogitovirus/posts/20230320-open-source-data-stack-poc/).
 
-## Running it locally
-You need to have environment variables set up for the following:
-```
-AIRBYTE_CONNECTION_ID=
-AIRBYTE_HOST=
-AIRBYTE_PORT=
-DBT_PROFILES_DIR=
-```
-those can be put in a `.env` file.
+![Alt text](Global_Asset_Lineage.svg)
 
-Then you can install the dependencies
+## Running it semi-locally
+
+### Install the dependencies
 ```sh
 pip install -e ".[dev]"
 ```
+
+### Env variables
+In `.env_template` you will find the enviroment variables that you need to set. Rename this file to `.env`.
+
+### Google Cloud
+This setup uses Google BigQuery as a data warehouse. That means that you should have an accound and ideally a seperate Google Cloud Project to run it. Switching to Databricks, Snowflake or Postgres shouldn't be that diffucult if you want to try it out, you would just need to manually setup up the Airbyte connectors and make sure dbt is pointing at the right schema.
+
+### S3
+Since Airbyte does not have a working source GCS connector, S3 is used as a source. That means that you will need an S3 bucket with it's secret and access key. Bucket contect is structured as follows:
+```
+jaffle_shop/
+  jaffle_shop_customers.csv
+  jaffle_shop_orders.csv
+  stripe_payments.csv
+```
+With source files available [here](https://github.com/dbt-labs/jaffle_shop/tree/main/seeds)
+
+### dbt
+Dagster points at the dbt profile located under dbt_project/config/profiles.yml . By default it authorizes via gcloud cli, but you will most likely need to run
+```
+gcloud auth application-default login
+```
+to first obtain [access credentials](https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login).
+
+
 ### Airbyte
-Follow the instructions in the [Airbyte repo](https://docs.airbyte.com/deploying-airbyte/local-deployment/) to start Airbyte locally. Alternatively you can use the terraform scripts in the `automation/terraform` folder to create the resources in GCP, then you can run the following command to create an SSH tunnel to the Airbyte server:
+Follow the instructions in the [Airbyte repo](https://docs.airbyte.com/deploying-airbyte/local-deployment/) to start Airbyte locally.
+
+Alternatively you can use the terraform scripts in the `automation/terraform` folder to create the resources in GCP (along with the BigQuery dataset). Then you will need to run the following command to create an SSH tunnel to the Airbyte server:
 ```sh
 # In your workstation terminal
 SSH_KEY=~/Downloads/dataline-key-airbyte.pem
@@ -26,54 +48,29 @@ or using gcloud
 ```sh
 gcloud compute ssh --zone=us-central1-a --ssh-key-file=$SSH_KEY --project=$PROJECT_ID $INSTANCE_NAME -- -L 8000:localhost:8000 -N -f
 ```
-### Setup a sample s3<>bigquery connector
+
+You should now be able to access Airbyte under `http://localhost:8000/`using username and password specified in the `.env` file
+
+### Create the S3 to BigQuery connectors
+Run:
 
 ```sh
 python3 -m gcs_modern_data_stack.utils.setup_airbyte
 ```
+This will seed airbyte with 3 source connectors, bigQuery destination and the connections between sources and destination. After running it, you can inspect the AirByte UI.
 
-## dbt BigQuery
-### option 1 - gcloud authentification
-Your profile should look like this:
-```yml
-jaffle_shop_bq:
-  target: dev
-  outputs:
-    dev:
-      type: bigquery
-      method: oauth
-      project: [GCP project id]
-      dataset: [the name of your dbt dataset] # You can also use "schema" here
-      threads: [1 or more]
-      <optional_config>: <value>
-```
-### option 2 - service account
-<!-- TODO: service account terraform -->
-```yml
-my-bigquery-db:
-  target: dev
-  outputs:
-    dev:
-      type: bigquery
-      method: oauth-secrets
-      project: [GCP project id]
-      dataset: [the name of your dbt dataset] # You can also use "schema" here
-      threads: [1 or more]
-      refresh_token: [token]
-      client_id: [client id]
-      client_secret: [client secret]
-      token_uri: [redirect URI]
-      <optional_config>: <value>
-```
+**Hint:** Make sure that the ids that were set up, did indeed made it to .env file. I stumbled upon an issue where i had .env file opened in my IDE which was preventing automation from writing to the file properly.
 
-Now you can run the dagster server
+### Dagster
+Run the dagster server
 ```sh
 dagster dev
 ```
-
+And materialize all the assets. If you've done everything correctly you should be able to push the test data through and play around some more!
 
 
 ## Terraform
+If you were not able/don't want to setup Airbyte locally, here's how you would do it with terraform:
 ```sh
 cd automation/terraform
 ```
@@ -82,7 +79,7 @@ create a `terraform.tfvars` file with the following content:
 project          = "your-project-id"
 credentials_file = "path/to/your/credentials.json"
 ```
-In order to run
+In order to run:
 ```sh
 terraform init
 terraform plan

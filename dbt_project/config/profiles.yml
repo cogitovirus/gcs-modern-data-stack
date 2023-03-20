@@ -1,0 +1,9 @@
+jaffle_shop_bq:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('BQ_TARGET_PROJECT_ID') }}"
+      dataset: "{{ env_var('BQ_TARGET_DATASET_ID') }}"
+      threads: 1
