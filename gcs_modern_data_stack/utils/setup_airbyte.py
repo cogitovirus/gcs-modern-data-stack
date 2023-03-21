@@ -4,8 +4,8 @@ create an Airbyte Connection between the source database and destination databas
 """
 
 from typing import Any, Dict, Mapping
-from dotenv import set_key
 from pathlib import Path
+from dotenv import set_key
 
 import dagster._check as check
 from dagster_airbyte import AirbyteResource

@@ -14,7 +14,9 @@ pip install -e ".[dev]"
 In `.env_template` you will find the environment variables that you need to set. Rename this file to `.env`.
 
 ### Google Cloud
-This setup uses Google BigQuery as a data warehouse. That means you should have a GCP account, preferably a separate project to run it. Switching to Databricks, Snowflake or Postgres shouldn't be that difficult. If you want to try it out, you should manually setup up the Airbyte connectors and confirm that dbt is pointing to the correct schema.
+This setup uses Google BigQuery as a data warehouse. That means you should have a GCP account, preferably a separate project to run it. Fill in your project id and dataset id in the .env file. You can create the dataset manually in BigQuery or use the provided terraform automation (creates airbyte EC2 as well).
+
+Switching to Databricks, Snowflake or Postgres shouldn't be that difficult. If you want to try it out, you should manually setup up the Airbyte connectors and confirm that dbt is pointing to the correct schema.
 
 ### S3
 Since Airbyte does not have a working source GCS connector, S3 is used as a source. You will need an S3 bucket with its secret and access key. The bucket content is structured as follows:
@@ -69,6 +71,18 @@ dagster dev
 ```
 And materialize all the assets. If you've done everything correctly, you should be able to push the test data through and play around!
 
+## Troubleshooting
+
+## Request to Airbyte API failed: 404 Client error
+Make sure you have the tunnel running (is Airbyte is deployed on GCP) and the Airbyte server is up and running. Stop the dagster server, run the tunnel command again and start the dagster server in the same terminal session.
+
+## Env var required but not provided: 'BQ_TARGET_PROJECT_ID'
+```
+Encountered an error:
+Parsing Error
+  Env var required but not provided: 'BQ_TARGET_PROJECT_ID'
+```
+Make sure you are running your python commands from the root directory of the project. This is because the env vars are loaded from the `.env` file in the root directory.
 
 ## Terraform
 If you were not able/don't want to setup Airbyte locally, here's how you would do it with terraform:

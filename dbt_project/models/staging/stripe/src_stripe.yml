@@ -2,6 +2,6 @@ version: 2
 
 sources:
   - name: stripe
-    schema: mds_test_dataset
+    schema: "{{ env_var('BQ_TARGET_DATASET_ID') }}"
     tables:
       - name: stripe_payments

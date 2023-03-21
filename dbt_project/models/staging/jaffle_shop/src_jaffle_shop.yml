@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: jaffle_shop
     description: A clone of a Postgres application database.
-    schema: mds_test_dataset
+    schema: "{{ env_var('BQ_TARGET_DATASET_ID') }}"
     tables:
       - name: jaffle_shop_customers
         description: Raw customers data.
