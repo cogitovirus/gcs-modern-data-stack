@@ -14,7 +14,7 @@ pip install -e ".[dev]"
 In `.env_template` you will find the environment variables that you need to set. Rename this file to `.env`.
 
 ### Google Cloud
-This setup uses Google BigQuery as a data warehouse. That means you should have a GCP account, preferably a separate project to run it. Fill in your project id and dataset id in the .env file. You can create the dataset manually in BigQuery or use the provided terraform automation (creates airbyte EC2 as well).
+This setup uses Google BigQuery as a data warehouse. That means you should have a GCP account, preferably a separate project to run it. Fill in your project id and dataset id in the .env file. You can create the dataset manually in BigQuery or use the provided terraform automation (creates Airbyte EC2 as well).
 
 Switching to Databricks, Snowflake or Postgres shouldn't be that difficult. If you want to try it out, you should manually setup up the Airbyte connectors and confirm that dbt is pointing to the correct schema.
 
@@ -50,7 +50,7 @@ or using gcloud
 gcloud compute ssh --zone=us-central1-a --ssh-key-file=$SSH_KEY --project=$PROJECT_ID $INSTANCE_NAME -- -L 8000:localhost:8000 -N -f
 ```
 
-You should now be able to access Airbyte under `http://localhost:8000/`using the username and password specified in the `.env` file.
+You should now be able to access Airbyte under `http://localhost:8000/` using the username and password specified in the `.env` file.
 
 ### Create the S3 to BigQuery connectors
 Run:
@@ -60,12 +60,12 @@ python3 -m gcs_modern_data_stack.utils.setup_airbyte
 ```
 This will seed Airbyte with 3 source connectors, BigQuery destination, and the connections between sources and destination. After running it, you can inspect the AirByte UI.
 
-**Hint:** Make sure the set up IDs made it to the .env file. I stumbled upon an issue where I had .env file opened in my IDE which was preventing automation from writing to the file.
+**Hint:** Make sure the setup IDs made it to the .env file. I stumbled upon an issue where I had .env file opened in my IDE which was preventing automation from writing to the file.
 
 **Hint2:** there's also a `gcs_modern_data_stack.utils.teardown_airbyte` if you need to redo the auto setup.
 
 ### Dagster
-Run the dagster server
+Run the Dagster server
 ```sh
 dagster dev
 ```
@@ -74,7 +74,7 @@ And materialize all the assets. If you've done everything correctly, you should 
 ## Troubleshooting
 
 ## Request to Airbyte API failed: 404 Client error
-Make sure you have the tunnel running (is Airbyte is deployed on GCP) and the Airbyte server is up and running. Stop the dagster server, run the tunnel command again and start the dagster server in the same terminal session.
+Make sure you have the tunnel running (Airbyte is deployed on GCP) and the Airbyte server is up and running. Stop the dagster server, run the tunnel command again and start the dagster server in the same terminal session.
 
 ## Env var required but not provided: 'BQ_TARGET_PROJECT_ID'
 ```
@@ -82,19 +82,21 @@ Encountered an error:
 Parsing Error
   Env var required but not provided: 'BQ_TARGET_PROJECT_ID'
 ```
-Make sure you are running your python commands from the root directory of the project. This is because the env vars are loaded from the `.env` file in the root directory.
+Make sure you are running your Python commands from the root directory of the project. This is because the env vars are loaded from the `.env` file in the root directory.
 
 ## Terraform
-If you were not able/don't want to setup Airbyte locally, here's how you would do it with terraform:
+If you were not able/don't want to set up Airbyte locally, here's how you would do it with Terraform:
 ```sh
 cd automation/terraform
 ```
 create a `terraform.tfvars` file with the following content:
+
 ```hcl
 project          = "your-project-id"
 credentials_file = "path/to/your/credentials.json"
 ```
-In order to run:
+
+To run:
 ```sh
 terraform init
 terraform plan
